@@ -3,6 +3,9 @@
 	Typographic HUD. Shows the controls relevant to the current view (tree
 	geometry in the Argument Tree, typography everywhere else) plus live
 	manuscript telemetry. All values are bound straight into `studio.hud`.
+
+	Below the `xl` breakpoint the HUD sits above the essay, so it starts
+	collapsed to a single row; the header toggles it open.
 -->
 <script lang="ts">
   import { getStudio } from '#lib/state/studio.svelte.ts';
@@ -11,6 +14,12 @@
   const studio = getStudio();
   const hud = $derived(studio.hud);
   const pct = (n: number) => `${Math.round(n * 100)}%`;
+  const title = $derived(
+    `SYS // ${studio.activeView === 'tree' ? 'TREE GEOMETRY' : 'TYPOGRAPHIC HUD'}`
+  );
+
+  let open = $state(false);
+  const bodyId = $props.id();
 </script>
 
 <section
@@ -18,10 +27,21 @@
   class="flex w-full shrink-0 flex-col justify-between border-b border-ink/40 bg-vellum/75 p-4 font-mono text-[10px] xl:w-[275px] xl:border-r xl:border-b-0 print:hidden"
 >
   <div>
-    <div class="mb-3 flex items-center justify-between border-b border-ink pb-1.5">
-      <span class="font-bold text-ink uppercase">
-        SYS // {studio.activeView === 'tree' ? 'TREE GEOMETRY' : 'TYPOGRAPHIC HUD'}
-      </span>
+    <div
+      class={[
+        'flex items-center justify-between border-b border-ink pb-1.5 xl:mb-3',
+        open && 'mb-3',
+      ]}
+    >
+      <button
+        onclick={() => (open = !open)}
+        aria-expanded={open}
+        aria-controls={bodyId}
+        class="flex items-center gap-1.5 font-bold text-ink uppercase xl:hidden"
+      >
+        <span aria-hidden="true" class="inline-block w-2">{open ? '▾' : '▸'}</span>{title}
+      </button>
+      <span class="hidden font-bold text-ink uppercase xl:inline">{title}</span>
       <button
         onclick={() => studio.resetHud()}
         class="text-ink-soft uppercase hover:text-ink"
@@ -29,7 +49,7 @@
       >
     </div>
 
-    <div class="mb-4 space-y-3">
+    <div id={bodyId} class={['mb-4 space-y-3 xl:block', open ? 'block' : 'hidden']}>
       {#if studio.activeView === 'tree'}
         <HudSlider
           label="SPREAD"
@@ -108,7 +128,12 @@
     </div>
   </div>
 
-  <dl class="space-y-1 border-t border-ink pt-3 text-[10px] text-ink">
+  <dl
+    class={[
+      'space-y-1 border-t border-ink pt-3 text-[10px] text-ink xl:block',
+      open ? 'block' : 'hidden',
+    ]}
+  >
     <div class="grid grid-cols-2">
       <dt class="text-ink-soft">WORDS</dt>
       <dd class="font-semibold">: {studio.telemetry.wordCount}</dd>

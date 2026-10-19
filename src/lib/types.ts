@@ -41,7 +41,10 @@ export interface TreeNode {
 export interface Essay {
   id: string;
   code: string;
+  /** Publication date as ISO `YYYY-MM-DD` (RSS, structured data, archive order). */
+  published: string;
   category: string;
+  /** Display dateline, e.g. "AUTUMN 2026 · ISSUE IV". */
   date: string;
   title: string;
   subtitle: string;
@@ -58,6 +61,31 @@ export interface Essay {
   marginalia: readonly Marginalia[];
   treeNodes: readonly TreeNode[];
 }
+
+/**
+ * A committed snapshot of an essay's text in the Manuscript Studio. Stored in
+ * the browser (local mode) or on the server (shared mode, signed-in editors).
+ */
+export interface Revision {
+  id: string;
+  essayId: string;
+  /** 1-based position in the essay's history (R1, R2, …). */
+  seq: number;
+  paragraphs: string[];
+  note: string;
+  author: string;
+  /** ISO timestamp. */
+  createdAt: string;
+}
+
+/** The signed-in editor, as exposed to the browser. */
+export interface Editor {
+  username: string;
+  displayName: string;
+}
+
+/** Where committed revisions live: this browser only, or the shared server. */
+export type SyncMode = 'local' | 'shared';
 
 /** Bullet-journal symbols (Ryder Carroll's rapid-logging key, extended). */
 export type LogSymbol = '□' | '■' | '●' | '—' | '★' | '▲' | '▽';

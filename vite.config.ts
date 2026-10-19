@@ -12,6 +12,10 @@ export default defineConfig({
     tailwindcss(),
     sveltekit({
       adapter: adapter(),
+      // Inline the app stylesheet (~36 KB raw, ~8 KB gzipped) into each page so
+      // first paint doesn't wait for an extra CSS round trip (Lighthouse:
+      // render-blocking resources on mobile).
+      inlineStyleThreshold: 48 * 1024,
       compilerOptions: {
         // Fail fast on legacy syntax (`export let`, `$:`, `on:click`): the
         // codebase is runes-only.
@@ -20,7 +24,26 @@ export default defineConfig({
     }),
   ],
   test: {
-    include: ['src/**/*.test.ts'],
-    environment: 'node',
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'server',
+          include: ['src/**/*.test.ts'],
+          exclude: ['src/**/*.svelte.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        // Rune modules are compiled for the browser so `$state` proxies and
+        // `$effect` behave as they do in the app (see the environment file).
+        extends: true,
+        test: {
+          name: 'client',
+          include: ['src/**/*.svelte.test.ts'],
+          environment: './src/test/client-environment.ts',
+        },
+      },
+    ],
   },
 });

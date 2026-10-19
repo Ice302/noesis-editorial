@@ -3,105 +3,168 @@
 ## Overview
 
 ```text
-+page.svelte ── setStudio(new StudioState()) ──┐   (typed context)
-  │                                            │
-  ├─ LeftSpineNav     essay index, slash nav, export
-  ├─ WoodcutHeader    masthead + ARIA tab strip
-  ├─ ParameterHUD ─── HudSlider ×n             │  every component calls
-  └─ panel                                     │  getStudio() and reads
-       ├─ BroadsheetEssay ── StudioToolbar     │  fields directly; writes
-       ├─ ArgumentTree   (keyed per essay)     │  go through methods
-       └─ AnalogLog                            │
-  Toast ───────────────────────────────────────┘
+routes/+layout.svelte            global CSS, favicon, RSS <link>
+└─ (studio)/+layout.svelte ── setStudio(new StudioState({ api, routeEssayId, onSelectEssay }))
+   │   ├─ LeftSpineNav       essay links, slash nav, export, editorial sign-in
+   │   ├─ WoodcutHeader      masthead + ARIA tab strip
+   │   ├─ ParameterHUD ─── HudSlider ×n   (collapsible below xl)
+   │   ├─ panel
+   │   │    ├─ BroadsheetEssay ── StudioToolbar, RevisionPanel, ReadingProgress
+   │   │    ├─ ArgumentTree     (keyed per essay)
+   │   │    └─ AnalogLog
+   │   ├─ LoginDialog, Toast
+   │   └─ {@render children()}  ← pages: only <svelte:head> metadata (EssayHead)
+   ├─ (studio)/+page            /               first essay
+   └─ (studio)/essays/[id]      /essays/<id>    one prerendered page per essay
+archive/+page.svelte             /archive        search (standalone page)
+rss.xml/+server.ts               /rss.xml        prerendered feed
+api/**/+server.ts                /api/*          shared editing (not prerendered)
 ```
+
+### Why the studio lives in a layout
+
+The `(studio)` route group holds the shell and the `StudioState`. Navigating
+between `/essays/ms-01` and `/essays/ms-02` changes only the page, so the HUD,
+drafts, open panel and sign-in survive. The state reads the essay from the
+route (`routeEssayId: () => page.params.id ?? first`), and choosing an essay
+calls `onSelectEssay`, which navigates with `goto`. The URL is the source of
+truth for which essay is open, and the back button works.
+
+Each page renders only `<EssayHead>` (title, description, canonical, Open
+Graph, Twitter card, schema.org `Article` JSON-LD). Because pages are
+prerendered, link previews and search engines see the right essay without
+running JavaScript.
 
 ## State: `StudioState` (`src/lib/state/studio.svelte.ts`)
 
-One class holds all UI state as `$state` fields, with everything computed from
-it as `$derived` fields:
+One class with `$state` fields and `$derived` views. It is provided through
+`createContext`, so it is never shared between server requests.
 
-| Field                                                      | Kind       | Notes                                                    |
-| ---------------------------------------------------------- | ---------- | -------------------------------------------------------- |
-| `activeEssayId`, `activeView`                              | `$state`   | Mirrored to `?essay=&view=`                              |
-| `hud`                                                      | `$state`   | Bound directly by the HUD sliders; persisted             |
-| `edits`                                                    | `$state`   | `{ [essayId]: string[] }` — absent key = archival text   |
-| `log`                                                      | `$state`   | Deep clone of `ANALOG_LOG_DB`; persisted                 |
-| `activeEssay`, `paragraphs`                                | `$derived` | `paragraphs` prefers edits over the archive              |
-| `renderedParagraphs`                                       | `$derived` | Sanitized HTML, the only thing passed to `{@html}`       |
-| `telemetry`                                                | `$derived` | Words, reading time, lexical diversity of _current_ text |
-| `selectedNode`, `visibleLog`, `isLiveEditMode`, `hasEdits` | `$derived` |                                                          |
+### Text model per essay
 
-**Why a class in context, not a module singleton?** Module state is shared by
-every request during server rendering. Context scopes it to one component tree,
-and `createContext` gives typed `getStudio` / `setStudio` without string keys
-(Svelte best-practices guide).
-
-**Why `$derived` instead of `$effect`?** Effects that write state run after
-render and can loop. Derivations are lazy, glitch-free and cached. The page uses
-exactly three effects, all syncing _out_ to systems Svelte doesn't own:
-localStorage (debounced), the URL, and panel scroll position.
-
-## Rendering the argument tree
-
-`layoutTree()` (`utils/tree.ts`) is a pure function: nodes + HUD geometry →
-positioned nodes with SVG paths and label boxes. The maths is the original
-breadth-first walk (two-segment branches bending at 52% of their length;
-length × 0.84 and stroke × 0.68 per level), now with:
-
-- an O(n) children index instead of filtering all nodes for every node,
-- a cycle guard so malformed data can't hang the page,
-- **label collision avoidance**: labels are placed in BFS order and lifted in
-  18-unit steps until clear; a dashed leader line connects a lifted label to its node,
-- `treeBounds()` + `fitZoom()` so the viewBox centres on the tree and each essay
-  opens at a zoom that fills the canvas.
-
-`ArgumentTree.svelte` renders this declaratively. The original version rebuilt
-`innerHTML` and re-attached click listeners on every slider tick; now Svelte
-only updates the attributes that changed. The component is wrapped in
-`{#key activeEssayId}` so pan and zoom reset for each essay.
-
-## Manuscript editing and HTML safety
-
-Paragraphs are stored as small inline-HTML strings. In the studio each one is a
-`contenteditable` `<p>` with a function binding:
-
-```svelte
-bind:innerHTML={(() => studio.paragraphs[idx], (html) => studio.setParagraph(idx, html))}
+```text
+archival text (essayContent.js)  →  R1 → R2 → … → Rn  →  working draft (edits[id])
+                                    └── history ──┘      └── uncommitted ──┘
 ```
 
-The first edit copies the essay's paragraphs into `edits[essayId]`. Raw input is
-kept while typing, so the caret never jumps, and normalised on blur.
+| Field                      | Meaning                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| `history`                  | `sharedRevisions[id]` when signed in, else `localRevisions[id]`                                  |
+| `baseParagraphs`           | latest revision's text, or the archive                                                           |
+| `paragraphs`               | the draft if there is one, else `baseParagraphs` — what the spread shows                         |
+| `hasEdits`                 | the draft differs from `baseParagraphs`                                                          |
+| `redline` / `redlineParts` | two text references (`'archive'`, `'draft'`, or a revision id) and their per-paragraph word diff |
 
-Everything shown with `{@html}` first goes through `sanitizeEssayHtml()`. It
-rebuilds the markup from scratch with an allow-list (`em`, `strong`, `br`,
-`mark.editorial-highlight`). Every attribute is dropped, `script`, `style` and
-similar elements are removed with their content, and stray `<` is escaped. It is
-string-based, so it behaves the same during prerendering, in tests and in the
-browser.
+The first keystroke copies `baseParagraphs` into `edits[id]`. Raw
+`contenteditable` HTML is kept while typing, so the caret never jumps, and
+sanitized on blur and again on commit.
 
-## Styling
+### Side effects are injected
 
-- Tailwind v4 with an `@theme` block defining the palette (`ink`, `ink-mid`,
-  `ink-soft`, `pastel`, `pastel-deep`, `vellum`, `paper`, `desk`) and the three
-  font families (`serif` Newsreader, `mono` JetBrains Mono, `display` Shippori Mincho).
-- Rules that must reach `{@html}` output or `<body>` live in `app.css`. Svelte's
-  scoped `<style>` can't see markup it didn't compile.
-- HUD values reach CSS through custom properties set with `style:` on the root
-  element (`--essay-font-scale`, `--essay-col-width`, …).
-- Print, reduced-motion and focus-visible styles are global.
+`StudioOptions` supplies the route reader, the navigation callback and a
+`StudioApi`. Tests pass fakes, and the app passes `httpApi`. Inside the class
+there is no `fetch`, `goto` or `$app/*` import.
 
-## Persistence
+### Effects (all in the studio layout, all syncing _outward_)
 
-`localStorage["noesis:studio:v1"]` holds `{ hud, edits, log }`. Writes are
-debounced by 250 ms and flushed on `pagehide`. Every storage access is wrapped
-in `try/catch`, because private windows and blocked site data must not break the
-page. Bump the `v1` suffix if the stored shape changes incompatibly.
+1. Persist `{ hud, edits, localRevisions, log }` to localStorage (debounced 250 ms, flushed on `pagehide`).
+2. Mirror the open panel into `?view=` with a shallow, replacing `goto`. It waits while a real navigation is in flight, so it can't cancel it.
+3. Load shared revisions for the open essay when an editor is signed in.
+4. Reset scroll when the essay changes.
+
+On mount, legacy `/?essay=` links are redirected first (awaited), then state is
+hydrated, then the session is checked.
+
+## Shared editing
+
+### Request flow
+
+```text
+browser ──fetch──▶ /api/* ──▶ hooks.server.ts ──cookie──▶ store.getSession(sha256(token))
+                                 │ locals.editor
+                                 ▼
+                          +server.ts handler ──▶ EditorialStore (node:sqlite)
+```
+
+| Endpoint                     | Method | Notes                                                          |
+| ---------------------------- | ------ | -------------------------------------------------------------- |
+| `/api/session`               | GET    | `{ editor }`. A 200 tells the client shared editing exists.    |
+| `/api/auth/login`            | POST   | `{ username, password }` → httpOnly session cookie             |
+| `/api/auth/logout`           | POST   | deletes the session                                            |
+| `/api/essays/[id]/revisions` | GET    | history (signed-in only)                                       |
+| `/api/essays/[id]/revisions` | POST   | `{ paragraphs, note, baseRevisionId }` → 201, or 409 + history |
+
+### Security decisions
+
+- **Passwords:** scrypt (N=16384, r=8, p=1) with a per-user salt. Parameters
+  are stored in the hash, so they can be raised later. Unknown usernames still
+  run scrypt against a dummy hash, so response timing doesn't reveal which
+  accounts exist. The error message is generic.
+- **Sessions:** a 32-byte random token, kept only in an `httpOnly`,
+  `SameSite=Lax` cookie (`Secure` outside localhost). The database stores its
+  SHA-256. Sessions last 30 days and slide forward when used past the halfway
+  point.
+- **Brute force:** 5 login attempts per address + username per 15 minutes
+  (in-memory, per process).
+- **Input:** JSON bodies are size- and shape-checked. Paragraph count must
+  match the essay. Every paragraph is re-sanitized on the server, whatever the
+  client sent.
+- **Concurrency:** commits name the revision they were based on. The insert
+  runs in a `BEGIN IMMEDIATE` transaction and is refused with 409 if a newer
+  revision exists.
+- **CSRF:** cookies are `SameSite=Lax` and mutations require
+  `Content-Type: application/json`, which cross-site forms can't send.
+  SvelteKit 3 also rejects cross-origin mutative requests without a content type.
+- **Caching:** API responses carry `Cache-Control: no-store`.
+
+### Deployment options
+
+The database code needs Node and a persistent file. Which host to use is a
+deployment decision. What each choice means:
+
+| Host type                      | Reading & local mode | Shared editing                                 |
+| ------------------------------ | -------------------- | ---------------------------------------------- |
+| Node server with a disk        | ✓                    | ✓ (as built)                                   |
+| Static hosting                 | ✓                    | hidden (no `/api`, sign-in doesn't show)       |
+| Serverless, no persistent disk | ✓                    | needs `EditorialStore` swapped for a hosted DB |
+
+`EditorialStore` is the only code that touches SQLite, so swapping it is a
+contained change.
+
+## Rendering details
+
+- **Argument tree:** `layoutTree()` is a pure function (BFS layout, label
+  collision avoidance, bounds). The component renders it declaratively, centres
+  the viewBox on the tree, and is keyed per essay so pan and zoom start fresh.
+  Arrow keys follow the tree's shape (it grows upward).
+- **Redlines:** `diffWords()` is an LCS over word tokens, with the common
+  prefix and suffix trimmed first. It runs on visible text (markup stripped),
+  is rendered with `<ins>` / `<del>`, and needs no `{@html}`.
+- **Search:** in-memory and diacritic-insensitive. Every term must match.
+  Matches are weighted title 10, category/author 6, subtitle 4, deck 2, body 1.
+  Body matches get a snippet.
+- **HTML safety:** everything shown with `{@html}` goes through
+  `sanitizeEssayHtml()` (allow-list rebuild). JSON-LD escapes `<`.
+
+## Performance
+
+See [PERFORMANCE.md](PERFORMANCE.md) for the Lighthouse audit. Key choices:
+
+- prerendered HTML for every page, with the app CSS inlined (`inlineStyleThreshold`)
+- Google Fonts loaded without blocking, with Shippori Mincho subset to the
+  glyphs used (`text=`). `src/lib/fonts.ts` and its test keep `app.html` in sync.
+- the reading-progress bar reads layout once per animation frame
 
 ## Testing
 
-`npm test` runs Vitest over:
+| Layer      | Tool                           | Where                                                                                        |
+| ---------- | ------------------------------ | -------------------------------------------------------------------------------------------- |
+| Pure logic | Vitest `server` project        | `src/lib/**/*.test.ts` (utils, data, server store/auth)                                      |
+| Rune state | Vitest `client` project        | `src/lib/**/*.svelte.test.ts`, compiled for the browser via `src/test/client-environment.ts` |
+| End to end | Playwright (desktop + Pixel 7) | `e2e/*.spec.ts`, against `vite build` + `vite preview` with a seeded SQLite file             |
 
-- `utils/*.test.ts` — telemetry, Markdown export, sanitizer (XSS cases), tree layout, labels, bounds
-- `state/studio.svelte.test.ts` — navigation, editing, revert, journal, URL hydration
-- `data/essayContent.test.ts` — content integrity (single tree root, valid
-  `parentId`/`paraIndex`, allowed markup, unique ids)
+Why the client project exists: under the default Node environment,
+`.svelte.ts` files compile for the server, where `$state` isn't proxied and
+`$effect` never runs. A real reactivity bug (pushing into the raw array
+returned by `??=`) passed the server-compiled tests and was caught by
+Playwright. `studio.svelte.test.ts` now has a regression test for it.

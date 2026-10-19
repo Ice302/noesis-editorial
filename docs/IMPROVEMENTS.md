@@ -130,6 +130,50 @@ spacing) is kept. New controls reuse its existing styles.
 99. **Vitest plus 58 tests** cover telemetry, export, sanitizer, tree layout and labels, state, and content integrity. Added `test` and `validate` scripts, `engines`, Prettier ignores, and VS Code settings.
 100.  **Documentation:** README, `ARCHITECTURE.md`, `CONTENT.md`, this log, JSDoc on every module and `@component` docs on every component.
 
+## Round 2 — follow-up recommendations
+
+Implemented after the first pass: recommendations 2, 3, 4, 6, 7, 8, 9, 10 and 12.
+Recommendations 1 (git), 5 (self-hosted fonts) and 11 (adapter / CSP) were left
+to the owner. This round supersedes item 62 (`?essay=` deep links became real
+routes, with old links redirected) and item 65 (Revert became _Discard Draft_
+and _Restore_ in the revision history).
+
+- **Per-essay pages (rec. 2).** `/essays/<id>` is prerendered for every essay,
+  with title, description, canonical URL, Open Graph/Twitter tags and Article
+  JSON-LD. The studio moved into a `(studio)` layout so its state survives
+  navigation. Spine items are real links (crawlable, open in a new tab).
+- **Fact-check of the two new essays (rec. 3).** Verified against sources and
+  corrected:
+  - Adorno's target is the four rules of the _Discourse on Method_ (not the _Rules for the Direction of the Mind_). The phrase is "ends when it feels itself complete".
+  - Locke's index uses the first letter and the vowel that _follows_ it.
+  - The Erasmus headings are now his documented example (gratitude under piety) rather than an illustrative list.
+- **Revision history and redlines (rec. 4).** Commit drafts with a note, keep
+  R1…Rn per essay, view word-level redlines between any two texts, restore any
+  revision, discard drafts.
+- **Browser tests (rec. 6).** 24 Playwright tests on desktop and a Pixel 7
+  profile. They cover routes and metadata, tabs, reading progress, editing,
+  commits, redlines, restore, highlight, tree keyboard navigation, zoom,
+  journal, HUD, archive search, RSS, shared editing with conflicts, the mobile
+  HUD, and horizontal overflow.
+- **Shared editing (rec. 7).** Node's built-in SQLite, scrypt passwords,
+  hashed session tokens in httpOnly cookies, login rate limiting, server-side
+  sanitizing and validation, optimistic concurrency (409 on stale commits), an
+  editor CLI, and a sign-in dialog. Signed-out use stays fully local.
+- **Collapsible HUD on phones (rec. 8).**
+- **Reader features (rec. 9).** Archive index with diacritic-insensitive
+  full-text search, snippets, category filters and shareable `?q=`. RSS 2.0
+  feed with full text. Reading-progress bar. A styled 404 page.
+- **Tree keyboard navigation (rec. 10).** ↑ child, ↓ parent, ←/→ siblings,
+  Home root.
+- **Lighthouse audit (rec. 12).** Mobile performance 60 → 97 (essay) and
+  69 → 99 (archive). Desktop accessibility 97 → 100. Details in
+  [PERFORMANCE.md](PERFORMANCE.md).
+- **Bug found by the new tests:** the first revision of an essay was pushed
+  into the raw array returned by `??=` and never shown. Fixed, with a
+  regression test in a new Vitest `client` project that compiles rune modules
+  for the browser.
+- **Unit tests:** 58 → 112 (diff, search, feed, store, auth, validation, fonts, state).
+
 ## Sources
 
 - SvelteKit 3 migration guide — config in `vite.config`, `#lib`, `$app/tsconfig`, `$app/state`, deprecated `replaceState`: <https://svelte.dev/docs/kit/migrating-to-sveltekit-3>
@@ -140,3 +184,5 @@ spacing) is kept. New controls reuse its existing styles.
 - Harry Roberts, "The Fastest Google Fonts": <https://csswizardry.com/2020/05/the-fastest-google-fonts/>
 - W3C WAI-ARIA Authoring Practices, Tabs pattern: <https://www.w3.org/WAI/ARIA/apg/patterns/tabs/>
 - MDN, ARIA `tablist` role: <https://developer.mozilla.org/docs/Web/Accessibility/ARIA/Roles/tablist_role>
+- SvelteKit environment variables (`defineEnvVars`, `$app/env/*`): <https://svelte.dev/docs/kit/environment-variables>
+- Fact-check sources: Wikipedia, "Bordeaux copy of the Essays" <https://en.wikipedia.org/wiki/Bordeaux_copy_of_the_Essays_(Montaigne)>; Wikipedia, "Copia: Foundations of the Abundant Style" <https://en.wikipedia.org/wiki/Copia:_Foundations_of_the_Abundant_Style>; Farnam Street on Locke's commonplace method <https://fs.blog/john-locke-common-place-book/>; notes on Adorno's "The Essay as Form" <https://eve.gd/2012/10/26/notes-on-adornos-the-essay-as-form>

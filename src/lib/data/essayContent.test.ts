@@ -13,6 +13,11 @@ describe('ESSAYS_DB', () => {
   });
 
   describe.each(ESSAYS_DB.map((e) => [e.id, e] as const))('%s', (_id, essay) => {
+    it('has an ISO publication date', () => {
+      expect(essay.published).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(Number.isNaN(Date.parse(essay.published))).toBe(false);
+    });
+
     it('has a five-column deck and at least one paragraph', () => {
       expect(essay.deckColumns).toHaveLength(5);
       expect(essay.paragraphs.length).toBeGreaterThan(0);

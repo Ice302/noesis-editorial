@@ -24,6 +24,7 @@
   --color-vellum: #f7eebe;
   --color-paper: #fcf8e3;
   --color-desk: #efe7c4;
+  --color-redline: #9c3d22; /* editorial deletions; 6.3:1 on paper */
 }
 
 /* HUD-driven custom properties. The page sets live values on its root element. */
@@ -151,6 +152,19 @@
   .essay-paragraph[contenteditable='true']:focus {
     outline: 1.5px solid var(--color-ink);
     background-color: rgba(242, 226, 148, 0.18);
+  }
+
+  /* Redlines: struck-through deletions, underlined insertions. */
+  .redline-del {
+    color: var(--color-redline);
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+  }
+  .redline-ins {
+    background-color: rgba(242, 226, 148, 0.75);
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
   }
 
   /* Brief highlight when jumping to a paragraph from the tree or a margin note. */

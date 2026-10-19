@@ -19,6 +19,7 @@ export const ESSAYS_DB = [
   {
     id: 'ms-01',
     code: 'MS. NO-2026-01',
+    published: '2026-10-05',
     category: 'PHILOSOPHY OF MEMORY',
     date: 'AUTUMN 2026 · ISSUE IV',
     title: 'The Cartography of Forgetting: How Analog Archives Shape Collective Memory',
@@ -210,6 +211,7 @@ export const ESSAYS_DB = [
   {
     id: 'ms-02',
     code: 'MS. NO-2026-02',
+    published: '2026-10-07',
     category: 'AESTHETICS & URBANISM',
     date: 'AUTUMN 2026 · ISSUE IV',
     title: 'Architectures of Silence: Contemplative Space in the Hyper-Indexed City',
@@ -340,6 +342,7 @@ export const ESSAYS_DB = [
   {
     id: 'ms-03',
     code: 'MS. NO-2026-03',
+    published: '2026-10-09',
     category: 'HISTORY OF THE BOOK',
     date: 'AUTUMN 2026 · ISSUE IV',
     title: 'The Commonplace Book: Reading With a Pen in Hand',
@@ -350,15 +353,15 @@ export const ESSAYS_DB = [
     filepath: '\\ARCHIVE\\MS_2026_03_COMMONPLACE.DOC',
     deckColumns: [
       'I. Seneca told Lucilius to read like a bee: gather from many flowers, then blend what is gathered into a single honey that tastes of no one flower in particular.',
-      'II. In 1512 Erasmus’s De Copia taught a generation of schoolboys to keep notebooks ruled into headings—virtue, fortune, friendship, death—and to file every striking passage beneath one.',
-      'III. John Locke devised an index for his own commonplace books keyed to the first letter and first vowel of each heading, a compact lookup table drawn by hand on two facing pages.',
+      'II. In 1512 Erasmus’s De Copia taught a generation of schoolboys to keep notebooks ruled into broad moral headings and narrower subheadings, and to file every striking passage beneath one.',
+      'III. John Locke devised an index for his own commonplace books keyed to the first letter of each heading and the vowel that follows it, a compact lookup table drawn by hand on two facing pages.',
       'IV. The method forced a decision at the moment of reading: where does this sentence belong? Classification was not clerical—it was the first act of interpretation.',
       'V. Our feeds save everything and decide nothing. The commonplace tradition suggests that what we keep matters less than the discipline of choosing where it goes.',
     ],
     paragraphs: [
       `In his eighty-fourth letter to Lucilius, Seneca offers a model of reading that the Renaissance would never quite forget. We should imitate bees, he writes, which wander among flowers, gather what suits them, and then transform the scattered nectar into something that is unmistakably their own. <mark class="editorial-highlight">Reading, on this view, is not consumption but digestion</mark>—a process in which borrowed material is broken down and reassembled until the seams of quotation disappear into a voice.`,
-      `Fifteen centuries later, Erasmus turned the image into a classroom procedure. His <em>De Copia</em> of 1512 advised students to prepare a blank notebook divided under headings—topics of praise and blame, of virtue and vice—and to copy every apt passage they met into its proper place. The <em>loci communes</em>, the “common places” of argument, became literal places on the page. A young reader of Cicero or Plutarch was expected to finish a book with a pen as much as with the eyes.`,
-      `The practice scaled badly, and its practitioners knew it. As printed books multiplied, the notebooks swelled, and finding anything inside them became its own labor. John Locke’s answer, first published in French in 1686 and in English after his death, was an index of breathtaking economy: each heading was filed under its initial letter and its first vowel, so that a single two-page grid could locate any entry in a volume of hundreds of leaves. <mark class="editorial-highlight">It is a search algorithm drawn in ink.</mark>`,
+      `Fifteen centuries later, Erasmus turned the image into a classroom procedure. His <em>De Copia</em> of 1512 advised students to prepare a blank notebook divided into broad moral headings and narrower subheadings—gratitude, in one of his examples, filed under piety—and to copy every apt passage they met into its proper place. The <em>loci communes</em>, the “common places” of argument, became literal places on the page. A young reader of Cicero or Plutarch was expected to finish a book with a pen as much as with the eyes.`,
+      `The practice scaled badly, and its practitioners knew it. As printed books multiplied, the notebooks swelled, and finding anything inside them became its own labor. John Locke’s answer, first published in French in 1686 and in English after his death, was an index of breathtaking economy: each heading was filed under its initial letter and the first vowel that follows it, so that a single two-page grid could locate any entry in a volume of hundreds of leaves. <mark class="editorial-highlight">It is a search algorithm drawn in ink.</mark>`,
       `What distinguishes the commonplace book from a modern archive of saved links is the moment of decision it imposes. To copy a sentence by hand is to spend time on it; to file it under a heading is to declare what it is about, and therefore what it might later be used to argue. As Ann Blair has shown in her history of early modern information overload, scholars did not merely store excerpts—they fought, compromised, and invented with them, building reference works out of the residue of their reading.`,
       `The contemporary reader saves an article with a single tap and never returns to it. Nothing has been chosen, so nothing has been learned about the choosing. The commonplace tradition offers a corrective that requires no nostalgia, only friction: decide where the passage goes before you keep it, and the archive becomes a portrait of a mind rather than a landfill of good intentions.`,
     ],
@@ -460,7 +463,7 @@ export const ESSAYS_DB = [
         citations: 14,
         scholia: 3,
         excerpt:
-          'A two-page grid keyed on initial letter and first vowel locates any heading in a volume of hundreds of leaves.',
+          'A two-page grid keyed on a heading’s initial letter and the vowel after it locates any entry in a volume of hundreds of leaves.',
       },
       {
         id: 'c5',
@@ -505,6 +508,7 @@ export const ESSAYS_DB = [
   {
     id: 'ms-04',
     code: 'MS. NO-2026-04',
+    published: '2026-10-12',
     category: 'LITERARY THEORY',
     date: 'AUTUMN 2026 · ISSUE IV',
     title: 'The Essay as Form: Heresy, Fragment, and the Courage to Remain Unfinished',
@@ -524,7 +528,7 @@ export const ESSAYS_DB = [
       `The word itself is a confession. When Montaigne published the first two books of his <em>Essais</em> in 1580, he chose a title that meant attempts, trials, weighings—the French verb <em>essayer</em> still carries the sense of trying something on to see whether it fits. He was not announcing conclusions. He was announcing a method of testing judgment against experience, and <mark class="editorial-highlight">he left the test visibly in progress</mark>, returning to the same chapters for the rest of his life.`,
       `Francis Bacon borrowed the word in 1597 for a slim volume of ten pieces, terse and aphoristic, closer to a statesman’s notebook than to Montaigne’s meandering self-portrait. Over the next three decades the collection swelled to fifty-eight essays. The English essay thus began as a form that grew by accretion: each edition a palimpsest of the last, each new piece a branch grafted onto an existing trunk of counsel.`,
       `In 1910 the young Georg Lukács wrote a long letter to his friend Leo Popper that would open his collection <em>Soul and Form</em>. The essay, Lukács argued, is a judgment in which what matters is not the verdict but the process of judging. Yet he could not quite let the form stand on its own: the essayist appears in his letter as a precursor, a voice in the wilderness preparing the way for a great system still to come.`,
-      `Theodor Adorno’s “The Essay as Form,” published in 1958, refuses that consolation. The essay, he insists, does not await a system; it is a standing objection to the very idea of one. Against Descartes’s rules for the direction of the mind, Adorno praises a writing that proceeds “methodically unmethodically,” that begins with the derived and the secondary, and that <mark class="editorial-highlight">ends where it feels itself complete rather than where nothing is left to say.</mark> Its law, he writes, is heresy.`,
+      `Theodor Adorno’s “The Essay as Form,” published in 1958, refuses that consolation. The essay, he insists, does not await a system; it is a standing objection to the very idea of one. Adorno reads the essay as a protest against the four rules of Descartes’s <em>Discourse on Method</em>: it proceeds “methodically unmethodically,” declines the hunt for first principles, and <mark class="editorial-highlight">ends when it feels itself complete rather than when its subject is exhausted.</mark> The law of its innermost form, he writes, is heresy.`,
       `The Romantics had a figure for this. Friedrich Schlegel described the fragment as a small work of art, complete in itself and bristling outward like a hedgehog. The essay is a hedgehog that knows it belongs to a larger animal it will never see whole. A reading environment worthy of the form would make that knowledge visible: show the branches that were not taken, the margins that argued back, the revisions that remain open—and trust the reader to find rigor in the unfinished.`,
     ],
     marginalia: [
@@ -651,7 +655,7 @@ export const ESSAYS_DB = [
         citations: 22,
         scholia: 8,
         excerpt:
-          'Adorno sets the essay against Cartesian method: it begins with the derived and ends where it feels complete.',
+          'Adorno sets the essay against the four rules of the Discourse on Method: it ends when it feels itself complete.',
       },
       {
         id: 'f7',

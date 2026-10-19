@@ -2,16 +2,21 @@
 	@component
 	The Aeon spread: five-column synopsis deck, essay header and byline, body
 	with drop cap, and a sticky marginalia column. In the Manuscript Studio
-	(`studio.isLiveEditMode`) paragraphs become `contenteditable`.
+	(`studio.isLiveEditMode`) paragraphs become `contenteditable` and the
+	revision history joins the margin. When a redline is open, the body shows
+	word-level insertions and deletions instead.
 -->
 <script lang="ts">
   import { getStudio } from '#lib/state/studio.svelte.ts';
   import { paragraphId, scrollToParagraph } from '#lib/utils/browser.ts';
   import { padIndex } from '#lib/utils/text.ts';
   import StudioToolbar from './StudioToolbar.svelte';
+  import RevisionPanel from './RevisionPanel.svelte';
+  import ReadingProgress from './ReadingProgress.svelte';
 
   const studio = getStudio();
   const essay = $derived(studio.activeEssay);
+  let body: HTMLDivElement | undefined = $state();
 
   /** Paste as plain text so foreign markup and styles never enter the manuscript. */
   function pastePlainText(event: ClipboardEvent) {
@@ -63,6 +68,10 @@
   }
 </script>
 
+{#if !studio.isLiveEditMode}
+  <ReadingProgress target={body} />
+{/if}
+
 <div class="space-y-8">
   <section aria-label="Synopsis" class="border-b-2 border-ink pb-6">
     <div
@@ -106,38 +115,59 @@
     </header>
 
     <div class="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
-      <div class="essay-body-container space-y-6 text-ink lg:col-span-8">
-        {#each studio.paragraphs as _, idx (essay.id + idx)}
-          {#if studio.isLiveEditMode}
-            <p
-              id={paragraphId(idx)}
-              data-para-index={idx}
-              class={['essay-paragraph text-justify hyphens-auto', idx === 0 && 'aeon-dropcap']}
-              contenteditable="true"
-              spellcheck="true"
-              aria-label={`Paragraph ${idx + 1}`}
-              bind:innerHTML={
-                () => studio.paragraphs[idx], (html) => studio.setParagraph(idx, html)
-              }
-              onpaste={pastePlainText}
-              onkeydown={onParagraphKeydown}
-              onblur={() => studio.normalizeParagraph(idx)}
-            ></p>
-          {:else}
-            <p
-              id={paragraphId(idx)}
-              tabindex="-1"
-              class={['essay-paragraph text-justify hyphens-auto', idx === 0 && 'aeon-dropcap']}
-            >
-              <!-- Safe: every paragraph passes through sanitizeEssayHtml (studio.renderedParagraphs). -->
-              <!-- eslint-disable-next-line svelte/no-at-html-tags -->
-              {@html studio.renderedParagraphs[idx]}
-            </p>
-          {/if}
-        {/each}
+      <div bind:this={body} class="essay-body-container space-y-6 text-ink lg:col-span-8">
+        {#if studio.redline && studio.redlineParts}
+          <div
+            role="status"
+            class="flex flex-wrap items-center justify-between gap-2 border border-ink bg-vellum/60 px-3 py-1.5 font-mono text-[10px] print:hidden"
+          >
+            <span>
+              <span class="bg-ink px-1.5 py-0.5 font-bold text-pastel">REDLINE</span>
+              {studio.labelFor(studio.redline.from)} → {studio.labelFor(studio.redline.to)}
+              · <del class="redline-del">deleted</del> · <ins class="redline-ins">inserted</ins>
+            </span>
+            <button onclick={() => studio.closeRedline()} class="hover:underline">CLOSE ✕</button>
+          </div>
+          {#each studio.redlineParts as parts, idx (essay.id + idx)}
+            <!-- prettier-ignore -->
+            <p id={paragraphId(idx)} tabindex="-1" class="essay-paragraph text-justify hyphens-auto">{#each parts as part, j (j)}{#if part.op === 'insert'}<ins class="redline-ins">{part.text}</ins>{:else if part.op === 'delete'}<del class="redline-del">{part.text}</del>{:else}{part.text}{/if}{/each}</p>
+          {/each}
+        {:else}
+          {#each studio.paragraphs as _, idx (essay.id + idx)}
+            {#if studio.isLiveEditMode}
+              <p
+                id={paragraphId(idx)}
+                data-para-index={idx}
+                class={['essay-paragraph text-justify hyphens-auto', idx === 0 && 'aeon-dropcap']}
+                contenteditable="true"
+                spellcheck="true"
+                aria-label={`Paragraph ${idx + 1}`}
+                bind:innerHTML={
+                  () => studio.paragraphs[idx], (html) => studio.setParagraph(idx, html)
+                }
+                onpaste={pastePlainText}
+                onkeydown={onParagraphKeydown}
+                onblur={() => studio.normalizeParagraph(idx)}
+              ></p>
+            {:else}
+              <p
+                id={paragraphId(idx)}
+                tabindex="-1"
+                class={['essay-paragraph text-justify hyphens-auto', idx === 0 && 'aeon-dropcap']}
+              >
+                <!-- Safe: every paragraph passes through sanitizeEssayHtml (studio.renderedParagraphs). -->
+                <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                {@html studio.renderedParagraphs[idx]}
+              </p>
+            {/if}
+          {/each}
+        {/if}
       </div>
 
       <aside aria-label="Marginalia and scholia" class="space-y-4 lg:sticky lg:top-4 lg:col-span-4">
+        {#if studio.isLiveEditMode}
+          <RevisionPanel />
+        {/if}
         <h2 class="border-b-2 border-ink pb-2 font-mono text-[11px] font-bold uppercase">
           Marginalia &amp; Scholia
         </h2>

@@ -1,14 +1,24 @@
 <!--
 	@component
-	Dark archival spine: masthead, slash navigation, the issue's essay index and
-	export actions.
+	Dark archival spine: masthead, slash navigation, the issue's essay index,
+	export actions and editorial sign-in.
 -->
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import { getStudio } from '#lib/state/studio.svelte.ts';
   import { VIEW_META } from '#lib/views.ts';
   import { padIndex } from '#lib/utils/text.ts';
 
+  let { onsignin }: { onsignin: () => void } = $props();
   const studio = getStudio();
+
+  /** Plain clicks stay in the app (keeping the toast); modified clicks open new tabs as usual. */
+  function openEssay(event: MouseEvent, id: string) {
+    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+      return;
+    event.preventDefault();
+    studio.selectEssay(id);
+  }
 </script>
 
 <aside
@@ -39,7 +49,7 @@
           aria-current={active ? 'page' : undefined}
           aria-keyshortcuts={view.key}
           class={[
-            'mr-1 last:mr-0 hover:text-pastel-deep',
+            'mr-1 inline-block min-h-6 last:mr-0 hover:text-pastel-deep',
             active && 'font-semibold underline decoration-pastel-deep underline-offset-4',
           ]}>{view.spine}</button
         >
@@ -64,15 +74,20 @@
         class="mb-2 flex items-center justify-between font-mono text-[10px] tracking-widest text-pastel uppercase"
       >
         <span id="monograph-heading">Current Monograph</span>
-        <span>{studio.essays.length} ESSAYS</span>
+        <a
+          href={resolve('/archive')}
+          class="underline-offset-4 hover:text-pastel-deep hover:underline"
+          title="Search the archive index">{studio.essays.length} ESSAYS ↗</a
+        >
       </div>
       <ul class="space-y-1.5" aria-labelledby="monograph-heading">
         {#each studio.essays as essay, idx (essay.id)}
           {@const active = essay.id === studio.activeEssayId}
           <li>
-            <button
-              onclick={() => studio.selectEssay(essay.id)}
-              aria-current={active ? 'true' : undefined}
+            <a
+              href={resolve(`/(studio)/essays/[id]${studio.viewSearch}`, { id: essay.id })}
+              onclick={(e) => openEssay(e, essay.id)}
+              aria-current={active ? 'page' : undefined}
               class={[
                 'flex w-full items-start gap-2.5 border p-2.5 text-left transition-all',
                 active
@@ -91,7 +106,7 @@
                   {essay.title}
                 </div>
               </div>
-            </button>
+            </a>
           </li>
         {/each}
       </ul>
@@ -103,19 +118,45 @@
     <div class="flex items-center gap-3 text-vellum">
       <button
         onclick={() => studio.copyMarkdown()}
-        class="font-mono text-xs hover:text-pastel-deep"
-        aria-label="Copy essay as Markdown">.MD</button
+        class="min-h-6 font-mono text-xs hover:text-pastel-deep"
+        >.MD<span class="sr-only"> — copy essay as Markdown</span></button
       >
       <button
         onclick={() => studio.copyTreeJson()}
-        class="font-mono text-xs hover:text-pastel-deep"
-        aria-label="Copy argument tree as JSON">.TREE</button
+        class="min-h-6 font-mono text-xs hover:text-pastel-deep"
+        >.TREE<span class="sr-only"> — copy argument tree as JSON</span></button
       >
       <button
         onclick={() => window.print()}
-        class="font-mono text-xs hover:text-pastel-deep"
-        aria-label="Print essay">PRINT</button
+        class="min-h-6 font-mono text-xs hover:text-pastel-deep"
+        >PRINT<span class="sr-only"> essay</span></button
+      >
+      <a
+        href={resolve('/rss.xml')}
+        class="inline-flex min-h-6 items-center font-mono text-xs hover:text-pastel-deep"
+        >RSS<span class="sr-only"> feed</span></a
       >
     </div>
+
+    {#if studio.sharedAvailable}
+      <div class="mt-3 border-t border-pastel/20 pt-3 font-mono text-[10px]">
+        <div class="mb-1.5 text-pastel/90">Editorial Access</div>
+        {#if studio.editor}
+          <div class="flex items-center justify-between gap-2 text-vellum">
+            <span class="truncate"
+              ><span class="text-pastel" aria-hidden="true">●</span>
+              {studio.editor.displayName}</span
+            >
+            <button onclick={() => studio.logout()} class="text-xs hover:text-pastel-deep"
+              >SIGN OUT</button
+            >
+          </div>
+        {:else}
+          <button onclick={onsignin} class="text-xs text-vellum hover:text-pastel-deep"
+            >SIGN IN →</button
+          >
+        {/if}
+      </div>
+    {/if}
   </div>
 </aside>

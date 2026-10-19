@@ -4,3 +4,7 @@ dist
 build
 package-lock.json
 docs/legacy
+test-results
+playwright-report
+e2e/.data
+data

@@ -73,11 +73,44 @@
     zoom = fitZoom(bounds);
   }
 
+  // --- keyboard navigation -------------------------------------------------
+  // The tree grows upward, so ↑ climbs to a child and ↓ returns to the parent;
+  // ←/→ move between siblings; Home jumps to the root thesis.
+  let svgEl: SVGSVGElement | undefined = $state();
+
+  function targetFor(key: string, id: string): string | null {
+    const nodes = studio.activeEssay.treeNodes;
+    const current = nodes.find((n) => n.id === id);
+    if (!current) return null;
+    const siblings = nodes.filter((n) => n.parentId === current.parentId);
+    const at = siblings.indexOf(current);
+    switch (key) {
+      case 'ArrowUp':
+        return nodes.find((n) => n.parentId === id)?.id ?? null;
+      case 'ArrowDown':
+        return current.parentId;
+      case 'ArrowLeft':
+        return siblings[at - 1]?.id ?? null;
+      case 'ArrowRight':
+        return siblings[at + 1]?.id ?? null;
+      case 'Home':
+        return nodes.find((n) => n.parentId === null)?.id ?? null;
+      default:
+        return null;
+    }
+  }
+
   function onNodeKeydown(event: KeyboardEvent, id: string) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       studio.selectTreeNode(id);
+      return;
     }
+    const target = targetFor(event.key, id);
+    if (event.key.startsWith('Arrow') || event.key === 'Home') event.preventDefault();
+    if (!target) return;
+    studio.selectTreeNode(target);
+    svgEl?.querySelector<SVGGElement>(`[data-node-id="${CSS.escape(target)}"]`)?.focus();
   }
 
   async function readInSpread() {
@@ -125,13 +158,14 @@
     <!-- On wide screens the excerpt panel floats on the right; reserve its width. -->
     <div class="w-full lg:pr-[340px]">
       <svg
+        bind:this={svgEl}
         {viewBox}
         class={[
           'h-[580px] w-full touch-none select-none',
           drag ? 'cursor-grabbing' : 'cursor-grab',
         ]}
         role="group"
-        aria-label={`Argument tree for “${studio.activeEssay.title}”. Drag to pan; Tab through nodes and press Enter to inspect.`}
+        aria-label={`Argument tree for “${studio.activeEssay.title}”. Drag to pan. On a node: arrow up for a sub-argument, arrow down for its parent, left and right for siblings, Home for the root thesis.`}
         onpointerdown={onPointerDown}
         onpointermove={onPointerMove}
         onpointerup={endDrag}

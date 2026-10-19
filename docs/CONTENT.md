@@ -11,8 +11,9 @@ Add an object to `ESSAYS_DB`:
 
 ```js
 {
-  id: 'ms-05',                       // unique; appears in URLs (?essay=ms-05)
+  id: 'ms-05',                       // unique; becomes the URL /essays/ms-05
   code: 'MS. NO-2026-05',
+  published: '2026-12-01',           // ISO date: RSS, JSON-LD, archive order
   category: 'PHILOSOPHY OF SCIENCE', // shown in caps in the spine and header
   date: 'WINTER 2026 · ISSUE V',
   title: 'Main title: optional subtitle',
@@ -75,7 +76,24 @@ npm run dev     # look at all four panels for the new essay
 ```
 
 The spine lists essays in array order, and the index numbers (`01`, `02`, …) are
-generated.
+generated. A new essay automatically gets:
+
+- its own prerendered page at `/essays/<id>`, with title, description, canonical
+  URL, Open Graph/Twitter tags and Article JSON-LD;
+- an entry in the archive index and its search;
+- an item in `/rss.xml` (dated by `published`).
+
+`npm test` also checks the title against the heading font subset
+(`fonts.test.ts`). If the title uses an unusual character (say `ø`), the test
+names it. Add it to `EXTRA_GLYPHS` in `src/lib/fonts.ts`, and paste the
+regenerated URL into `src/app.html` (the test prints both).
+
+## Editing published text vs. revisions
+
+Revisions made in the Manuscript Studio (local or shared) are an editorial
+workspace: readers always see the text in `essayContent.js`. To publish a
+revision, copy its text into the essay's `paragraphs` and deploy. **.MD** in
+the spine exports the current text as Markdown.
 
 ## Editing the journal seed
 
