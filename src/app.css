@@ -1,0 +1,202 @@
+/*
+ * NOĒSIS global stylesheet (Tailwind CSS v4).
+ *
+ * Fonts are loaded with a <link> in app.html rather than a CSS @import, so the
+ * browser can fetch them in parallel with this file instead of after it.
+ *
+ * Styles live here (not in a component <style> block) when they must reach
+ * markup Svelte cannot see at compile time — `{@html}` paragraph content such
+ * as <mark class="editorial-highlight"> — or global elements like <body>.
+ */
+@import 'tailwindcss';
+
+@theme {
+  --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-display: 'Shippori Mincho', 'Newsreader', Georgia, serif;
+
+  /* Archival palette — names describe the material, not the hue. */
+  --color-ink: #122038; /* navy: text, rules, spine */
+  --color-ink-mid: #1b2e4e;
+  --color-ink-soft: #29426b;
+  --color-pastel: #f2e294; /* highlight, active states */
+  --color-pastel-deep: #e9d16b;
+  --color-vellum: #f7eebe;
+  --color-paper: #fcf8e3;
+  --color-desk: #efe7c4;
+}
+
+/* HUD-driven custom properties. The page sets live values on its root element. */
+:root {
+  --essay-font-scale: 1.08;
+  --essay-col-width: 680px;
+  --essay-line-height: 1.75;
+  --marginalia-opacity: 1;
+  --highlight-intensity: 0.85;
+  color-scheme: light;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-desk);
+    color: var(--color-ink);
+    font-family: var(--font-serif);
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Tailwind v4 resets buttons to `cursor: default`; restore the pointer. */
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    cursor: pointer;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+  .on-ink :focus-visible {
+    outline-color: var(--color-pastel);
+  }
+}
+
+@layer components {
+  .paper-texture {
+    background-image:
+      radial-gradient(rgba(18, 32, 56, 0.035) 1px, transparent 0),
+      radial-gradient(rgba(18, 32, 56, 0.02) 1px, transparent 0);
+    background-size: 24px 24px;
+    background-position:
+      0 0,
+      12px 12px;
+  }
+
+  .hud-slider-row {
+    display: grid;
+    grid-template-columns: 118px 1fr;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+
+  .hud-meter-track {
+    position: relative;
+    height: 18px;
+    background: var(--color-paper);
+    border: 1px solid var(--color-ink);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+  }
+
+  .essay-body-container {
+    max-width: var(--essay-col-width);
+    font-size: calc(1.125rem * var(--essay-font-scale));
+    line-height: var(--essay-line-height);
+  }
+
+  .aeon-dropcap::first-letter {
+    float: left;
+    font-family: var(--font-display);
+    font-size: 4.1rem;
+    line-height: 0.82;
+    padding-top: 4px;
+    padding-right: 12px;
+    padding-bottom: 4px;
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  mark.editorial-highlight {
+    background-color: rgba(242, 226, 148, var(--highlight-intensity));
+    color: var(--color-ink);
+    padding: 0 3px;
+    border-bottom: 1.5px solid var(--color-ink);
+  }
+
+  .marginalia-card {
+    opacity: var(--marginalia-opacity);
+    transition: opacity 150ms ease;
+  }
+  .marginalia-card:hover,
+  .marginalia-card:focus-within {
+    opacity: 1;
+  }
+
+  .vertical-cjk {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: 0.25em;
+  }
+
+  .analog-spine {
+    border-left: 2px solid var(--color-ink);
+  }
+
+  .tab-btn-active {
+    border-bottom: 2.5px solid var(--color-ink);
+    font-weight: 600;
+    background-color: rgba(242, 226, 148, 0.45);
+  }
+
+  /* Manuscript Studio: editable paragraphs. */
+  .essay-paragraph[contenteditable='true'] {
+    outline: 1px dashed rgba(18, 32, 56, 0.35);
+    outline-offset: 6px;
+    border-radius: 1px;
+    transition: background-color 150ms ease;
+  }
+  .essay-paragraph[contenteditable='true']:focus {
+    outline: 1.5px solid var(--color-ink);
+    background-color: rgba(242, 226, 148, 0.18);
+  }
+
+  /* Brief highlight when jumping to a paragraph from the tree or a margin note. */
+  .para-flash {
+    animation: para-flash 1.6s ease-out;
+  }
+  @keyframes para-flash {
+    from {
+      background-color: rgba(242, 226, 148, 0.85);
+    }
+    to {
+      background-color: transparent;
+    }
+  }
+
+  .tree-node:focus {
+    outline: none;
+  }
+  .tree-node:focus-visible circle {
+    stroke-width: 3.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Print the broadsheet as a clean manuscript: no chrome, no shadows. */
+@media print {
+  body {
+    background: #fff;
+  }
+  .paper-texture {
+    background-image: none;
+  }
+  .essay-body-container {
+    max-width: none;
+  }
+  mark.editorial-highlight {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

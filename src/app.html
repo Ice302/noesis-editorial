@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="text-scale" content="scale" />
+    <meta name="theme-color" content="#122038" />
+    <meta name="color-scheme" content="light" />
+    <!--
+			Google Fonts: preconnect to both origins (the CSS host and the font-file
+			host) so the TLS handshake starts before the stylesheet is parsed, and use
+			display=swap so text renders in a fallback face instead of staying invisible.
+			Only the weights the design uses are requested; Newsreader and JetBrains
+			Mono are variable fonts, so a weight range costs one file per style.
+		-->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400..700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..500&family=Shippori+Mincho:wght@400;600;700&display=swap"
+    />
+    %sveltekit.head%
+  </head>
+  <body data-sveltekit-preload-data="hover">
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
+</html>

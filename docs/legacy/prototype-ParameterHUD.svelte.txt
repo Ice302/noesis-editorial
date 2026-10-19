@@ -1,0 +1,62 @@
+<script>
+  let scale = $state(1);
+  let colWidth = $state(68);
+  let lineHt = $state(1.75);
+
+  function updateVars() {
+    document.documentElement.style.setProperty('--essay-font-scale', scale);
+    document.documentElement.style.setProperty('--essay-col-width', `${colWidth}ch`);
+    document.documentElement.style.setProperty('--essay-line-height', lineHt);
+  }
+</script>
+
+<div
+  class="hud-panel p-4 bg-[#1B2E4E] text-[#F2E294] font-mono text-xs border-b border-[#F2E294]/20"
+>
+  <div class="font-bold tracking-widest mb-3 border-b border-[#F2E294]/30 pb-1">
+    TYPESETTING HUD // ENGINE
+  </div>
+
+  <div class="space-y-3">
+    <div>
+      <div class="flex justify-between">
+        <span>FONT SCALE:</span> <span>{scale.toFixed(2)}</span>
+      </div>
+      <input
+        type="range"
+        min="0.8"
+        max="1.4"
+        step="0.05"
+        bind:value={scale}
+        oninput={updateVars}
+        class="w-full accent-[#F2E294]"
+      />
+    </div>
+    <div>
+      <div class="flex justify-between"><span>COLUMN WIDTH:</span> <span>{colWidth}ch</span></div>
+      <input
+        type="range"
+        min="45"
+        max="85"
+        step="1"
+        bind:value={colWidth}
+        oninput={updateVars}
+        class="w-full accent-[#F2E294]"
+      />
+    </div>
+    <div>
+      <div class="flex justify-between">
+        <span>LINE HEIGHT:</span> <span>{lineHt.toFixed(2)}</span>
+      </div>
+      <input
+        type="range"
+        min="1.4"
+        max="2.2"
+        step="0.05"
+        bind:value={lineHt}
+        oninput={updateVars}
+        class="w-full accent-[#F2E294]"
+      />
+    </div>
+  </div>
+</div>

@@ -1,0 +1,12 @@
+<script lang="ts">
+  import '../app.css';
+  import favicon from '#lib/assets/noesis-mark.svg';
+
+  let { children } = $props();
+</script>
+
+<svelte:head>
+  <link rel="icon" href={favicon} type="image/svg+xml" />
+</svelte:head>
+
+{@render children?.()}
